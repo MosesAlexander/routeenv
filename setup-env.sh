@@ -3,7 +3,6 @@
 OPENWRT_PATH=/home/obsrwr/bmound/savedvols/kernwork/openwrt-qemu/openwrt
 YOCTO_PATH=/home/obsrwr/bmound/savedvols/kernwork/yocto/build
 
-
 copy_images () {
 	cp -v ${OPENWRT_PATH}/bin/x86/openwrt-x86-64-vmlinuz env/openwrt/openwrt-kernel
 	cp -v ${OPENWRT_PATH}/bin/x86/openwrt-x86-64-rootfs-ext4.img env/openwrt/rootfs1-openwrt.ext4
@@ -38,17 +37,13 @@ case "$1" in
 	-c|--copy-images)
 		echo "Copying images"
 		copy_images
-		break;
 		;;
 	-s|--set_paths)
 		echo "Setting paths"
-		break;
 		;;
 	-ns|--create-nsenv)
 		echo "Setting ns env"
 		create_namespace_env
-		ARG_NS=1
-		break
 		;;
 	*)
 		echo "Must supply one parameter:"
