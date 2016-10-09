@@ -63,20 +63,44 @@ cleanup_images () {
 }
 
 start_qemu () {
-	echo "MAC addres should end with:"
+	echo "MAC address should end with:"
 	read MACEND
+	if [ -z $MACEND ]; then
+		echo "No number provided."
+		exit 1;
+	fi
+	MACEND_VAL=$(echo "ibase=16; ${MACEND^^}" | bc)
+
+	if [ $MACEND_VAL -gt 255 ]; then
+		echo "Invalid number, must be a hexadecimal number no greater than ff"
+		exit 1;
+	fi
+
 	echo "MAC is $MACEND"
 
 	echo "VM type: openwrt or yocto:"
 	read VMTYPE
 
+	echo "VM net namespace 1 or 2:"
+	read NETNSNUM
+
+	if [ $NETNSNUM != "1" ] && [ $NETNSNUM != "2" ]; then
+		echo "Invalid network namespace number, must be 1 or 2."
+		exit 1
+	fi
+
 	case "$VMTYPE" in
 		openwrt)
-			sudo qemu-system-x86_64 -kernel openwrt-x86-64-vmlinuz \
-					-drive file=openwrt-x86-64-rootfs-ext4.img,id=d0,if=none \
-					-device ide-hd,drive=d0,bus=ide.0 -append "noapic acpi=off console=ttyS0 root=/dev/sda" \
-					-nographic -serial mon:stdio -enable-kvm -smp cpus=2 -cpu host -M q35 \
-					-smp cpus=2 \
+			if [ ! -e env/openwrt/openwrt-kernel ] | [ ! -e env/yocto/rootfs$NETNSNUM-yocto.ext4 ]; then
+				echo "ERROR: must provide kernel/rootfs images via -c parameter before attempting to boot"
+				exit 1
+			fi
+
+			sudo qemu-system-x86_64 -kernel env/openwrt/openwrt-kernel \
+					-drive file=env/yocto/rootfs$NETNSNUM-yocto.ext4,id=d0,if=none \
+					-device ide-hd,drive=d0,bus=ide.0 -append "root=/dev/sda console=ttyS0 noapic acpi=off" \
+					-nographic -serial mon:stdio -enable-kvm -smp cpus=2 \
+					-cpu host -M q35 -smp cpus=2 \
 					-netdev bridge,br=virbr0,id=hn0 -device e1000,netdev=hn0,id=nic1 \
 					-netdev user,id=hn1 -device e1000,netdev=hn1,id=nic2
 			;;
