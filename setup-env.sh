@@ -55,7 +55,10 @@ create_namespace_env () {
 }
 
 cleanup_namespace_env () {
-	exit 0
+	sudo ip link del veth0
+	sudo brctl delbr wrtbridge0
+	sudo brctl delbr yoctobridge0
+	sudo ip netns del outer_ns
 }
 
 cleanup_images () {
