@@ -110,6 +110,18 @@ start_qemu () {
 					-netdev user,id=hn1 -device e1000,netdev=hn1,id=nic2
 			;;
 		yocto)
+			if [ ! -e env/yocto/yocto-kernel ] | [ ! -e env/openwrt/rootfs$NETNSNUM-openwrt.ext4 ]; then
+				echo "ERROR: must provide kernel/rootfs images via -c parameter before attempting to boot"
+				exit 1
+			fi
+
+			sudo qemu-system-x86_64 -kernel env/yocto/yocto-kernel \
+					-drive file=env/yocto/rootfs$NETNSNUM-yocto.ext4,id=d0,if=none \
+					-device ide-hd,drive=d0,bus=ide.0 -append "root=/dev/sda console=ttyS0" \
+					-nographic -serial mon:stdio -enable-kvm -smp cpus=2 \
+					-cpu host -M q35 -smp cpus=2 \
+					-netdev bridge,br=wrtbridge0,id=hn0 -device e1000,netdev=hn0,id=nic1 \
+					-netdev user,id=hn1 -device e1000,netdev=hn1,id=nic2
 			;;
 		*)
 			echo "Error, invalid VM type!"
