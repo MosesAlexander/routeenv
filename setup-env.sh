@@ -84,6 +84,11 @@ start_qemu () {
 	echo "VM net namespace 1 or 2:"
 	read NETNSNUM
 
+	if [ -z $NETNSNUM ]; then
+		echo "No number provided."
+		exit 1
+	fi
+
 	if [ $NETNSNUM != "1" ] && [ $NETNSNUM != "2" ]; then
 		echo "Invalid network namespace number, must be 1 or 2."
 		exit 1
@@ -97,7 +102,7 @@ start_qemu () {
 			fi
 
 			sudo qemu-system-x86_64 -kernel env/openwrt/openwrt-kernel \
-					-drive file=env/yocto/rootfs$NETNSNUM-yocto.ext4,id=d0,if=none \
+					-drive file=env/openwrt/rootfs$NETNSNUM-openwrt.ext4,id=d0,if=none \
 					-device ide-hd,drive=d0,bus=ide.0 -append "root=/dev/sda console=ttyS0 noapic acpi=off" \
 					-nographic -serial mon:stdio -enable-kvm -smp cpus=2 \
 					-cpu host -M q35 -smp cpus=2 \
