@@ -139,7 +139,10 @@ case "$1" in
 		copy_images
 		;;
 	-s|--set_paths)
+		#TODO will probably just have an env.conf file 
+		#     to set all our host specific variables
 		echo "Setting paths"
+		echo "Not yet implemented."
 		;;
 	-ns|--create-nsenv)
 		echo "Setting ns env"
