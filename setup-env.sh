@@ -78,6 +78,22 @@ create_namespace_env () {
 	error_check_sudo "ip netns exec outer_ns brctl addif yoctobridge1 yocwrt-tap1"
 }
 
+get_interfaces_fds () {
+	wrtwrttap0_fd=$(ip addr | grep wrtwrt-tap0 | awk '{print $1}')
+	wrtwrttap0_fd=`echo $wrtwrttap0_fd | awk '{print substr($wrtwrttap0_fd, 0, length($wrtwrttap0_fd)-1)}'`
+	wrtyoctap0_fd=$(ip addr | grep wrtyoc-tap0 | awk '{print $1}')
+	wrtyoctap0_fd=`echo $wrtyoctap0_fd | awk '{print substr($wrtyoctap0_fd, 0, length($wrtyoctap0_fd)-1)}'`
+	yocwrttap0_fd=$(ip addr | grep yocwrt-tap0 | awk '{print $1}')
+	yocwrttap0_fd=`echo $yocwrttap0_fd | awk '{print substr($yocwrttap0_fd, 0, length($yocwrttap0_fd)-1)}'`
+	wrtwrttap1_fd=$(sudo ip netns exec outer_ns ip addr | grep wrtwrt-tap1 | awk '{print $1}')
+	wrtwrttap1_fd=`echo $wrtwrttap1_fd | awk '{print substr($wrtwrttap1_fd, 0, length($wrtwrttap1_fd)-1)}'`
+	wrtyoctap1_fd=$(sudo ip netns exec outer_ns ip addr | grep wrtyoc-tap1 | awk '{print $1}')
+	wrtyoctap1_fd=`echo $wrtyoctap1_fd | awk '{print substr($wrtyoctap1_fd, 0, length($wrtyoctap1_fd)-1)}'`
+	yocwrttap1_fd=$(sudo ip netns exec outer_ns ip addr | grep yocwrt-tap1 | awk '{print $1}')
+	yocwrttap1_fd=`echo $yocwrttap1_fd | awk '{print substr($yocwrttap1_fd, 0, length($yocwrttap1_fd)-1)}'`
+
+}
+
 cleanup_namespace_env () {
 	sudo ip link del veth0
 	sudo brctl delbr wrtbridge0
@@ -93,6 +109,10 @@ cleanup_images () {
 }
 
 start_qemu () {
+	# gotta get the dynamically assigned fds for all tap interfaces
+	# so that we can assign them to VM instance
+	get_interfaces_fds
+
 	echo "MAC address should end with:"
 	read MACEND
 	if [ -z $MACEND ]; then
@@ -131,13 +151,23 @@ start_qemu () {
 				exit 1
 			fi
 
+			if [ $NETNSNUM == "1" ]; then
+				INFD_YOC=$wrtyoctap0_fd
+				INFD_WRT=$wrtwrttap0_fd
+			elif [ $NETNSNUM == "2" ]; then
+				INFD_YOC=$wrtyoctap1_fd
+				INFD_WRT=$wrtwrttap1_fd
+			fi
+
 			sudo qemu-system-x86_64 -kernel env/openwrt/openwrt-kernel \
 					-drive file=env/openwrt/rootfs$NETNSNUM-openwrt.ext4,id=d0,if=none \
 					-device ide-hd,drive=d0,bus=ide.0 -append "root=/dev/sda console=ttyS0" \
 					-nographic -serial mon:stdio -enable-kvm -smp cpus=2 \
 					-cpu host -M q35 -smp cpus=2 \
-					-netdev bridge,br=wrtbridge0,id=hn0 -device e1000,netdev=hn0,id=nic1 \
-					-netdev user,id=hn1 -device e1000,netdev=hn1,id=nic2
+					-netdev tap,id=hn0,fd=$INFD_YOC \
+					-device e1000,netdev=hn0,id=nic0 \
+					-netdev tap,id=hn1,fd=$INFD_WRT \
+					-device e1000,netdev=hn1,id=nic1
 			;;
 		yocto)
 			if [ ! -e env/yocto/yocto-kernel ] | [ ! -e env/openwrt/rootfs$NETNSNUM-openwrt.ext4 ]; then
@@ -145,13 +175,19 @@ start_qemu () {
 				exit 1
 			fi
 
+			if [ $NETNSNUM == "1" ]; then
+				INFD=$yocwrttap0_fd
+			elif [ $NETNSNUM == "2" ]; then
+				INFD=$yocwrttap1_fd
+			fi
+
 			sudo qemu-system-x86_64 -kernel env/yocto/yocto-kernel \
 					-drive file=env/yocto/rootfs$NETNSNUM-yocto.ext4,id=d0,if=none \
 					-device ide-hd,drive=d0,bus=ide.0 -append "root=/dev/sda console=ttyS0" \
 					-nographic -serial mon:stdio -enable-kvm -smp cpus=2 \
 					-cpu host -M q35 -smp cpus=2 \
-					-netdev bridge,br=wrtbridge0,id=hn0 -device e1000,netdev=hn0,id=nic1 \
-					-netdev user,id=hn1 -device e1000,netdev=hn1,id=nic2
+					-netdev tap,id=hn0,fd=$INFD \
+					-device e1000,netdev=hn0,id=nic0
 			;;
 		*)
 			echo "Error, invalid VM type!"
