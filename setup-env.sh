@@ -1,5 +1,24 @@
 #!/bin/bash
 
+# routeenv script to help with virtual route test environment setup
+#
+# Copyright (C) 2016 Alexandru Moise <00moses.alexander00@gmail.com>
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+#      but WITHOUT ANY WARRANTY; without even the implied warranty of
+#      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#      GNU General Public License for more details.
+#
+#      You should have received a copy of the GNU General Public License
+#      along with this program; if not, write to the Free Software
+#      Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+
 OPENWRT_PATH=/home/obsrwr/bmound/savedvols/kernwork/openwrt-qemu/openwrt
 YOCTO_PATH=/home/obsrwr/bmound/savedvols/kernwork/yocto/build
 
