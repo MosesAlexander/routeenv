@@ -43,21 +43,48 @@ error_check_sudo () {
 }
 
 create_namespace_env () {
+	# first, create the outer net namespace
 	error_check_sudo "ip netns add outer_ns"
+	# the veth devices will be used so the openwrt routers can
+	# communicate with each other coming from separate net namespaces
 	error_check_sudo "ip link add veth0 type veth peer name veth1"
 	error_check_sudo "ip link set veth1 netns outer_ns"
-	error_check_sudo "ip netns exec outer_ns brctl addbr wrtbridge0"
-	error_check_sudo "ip netns exec outer_ns brctl addbr yoctobridge0"
-	error_check_sudo "ip netns exec outer_ns brctl addif wrtbridge0 veth1"
+	# the idea is to have 2 bridges in each network namespace,
+	# one so the yocto host can communicate with the router,
+	# the other so the routers can communicate with eachother.
+	error_check_sudo "ip netns exec outer_ns brctl addbr wrtbridge1"
+	error_check_sudo "ip netns exec outer_ns brctl addbr yoctobridge1"
+	error_check_sudo "ip netns exec outer_ns brctl addif wrtbridge1 veth1"
 	error_check_sudo "brctl addbr wrtbridge0"
 	error_check_sudo "brctl addbr yoctobridge0"
 	error_check_sudo "brctl addif wrtbridge0 veth0"
+	# 3 types of tap devices as per their roles:
+	# - router-to-router L2 communication
+	# - router-to-yoctohost L2 communication
+	# - yoctohost-to-router L2 communication
+	error_check_sudo "ip tuntap add name wrtwrt-tap0 mode tap"
+	error_check_sudo "ip tuntap add name wrtyoc-tap0 mode tap"
+	error_check_sudo "ip tuntap add name yocwrt-tap0 mode tap"
+	# outer_ns tap devices
+	error_check_sudo "ip netns exec outer_ns ip tuntap add name wrtwrt-tap1 mode tap"
+	error_check_sudo "ip netns exec outer_ns ip tuntap add name wrtyoc-tap1 mode tap"
+	error_check_sudo "ip netns exec outer_ns ip tuntap add name yocwrt-tap1 mode tap"
+	# wire the bridges for both network namespaces
+	error_check_sudo "brctl addif wrtbridge0 wrtwrt-tap0"
+	error_check_sudo "brctl addif yoctobridge0 wrtyoc-tap0"
+	error_check_sudo "brctl addif yoctobridge0 yocwrt-tap0"
+	error_check_sudo "ip netns exec outer_ns brctl addif wrtbridge1 wrtwrt-tap1"
+	error_check_sudo "ip netns exec outer_ns brctl addif yoctobridge1 wrtyoc-tap1"
+	error_check_sudo "ip netns exec outer_ns brctl addif yoctobridge1 yocwrt-tap1"
 }
 
 cleanup_namespace_env () {
 	sudo ip link del veth0
 	sudo brctl delbr wrtbridge0
 	sudo brctl delbr yoctobridge0
+	sudo ip link del wrtwrt-tap0
+	sudo ip link del wrtyoc-tap0
+	sudo ip link del yocwrt-tap0
 	sudo ip netns del outer_ns
 }
 
