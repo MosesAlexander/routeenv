@@ -103,10 +103,10 @@ start_qemu () {
 
 			sudo qemu-system-x86_64 -kernel env/openwrt/openwrt-kernel \
 					-drive file=env/openwrt/rootfs$NETNSNUM-openwrt.ext4,id=d0,if=none \
-					-device ide-hd,drive=d0,bus=ide.0 -append "root=/dev/sda console=ttyS0 noapic acpi=off" \
+					-device ide-hd,drive=d0,bus=ide.0 -append "root=/dev/sda console=ttyS0" \
 					-nographic -serial mon:stdio -enable-kvm -smp cpus=2 \
 					-cpu host -M q35 -smp cpus=2 \
-					-netdev bridge,br=virbr0,id=hn0 -device e1000,netdev=hn0,id=nic1 \
+					-netdev bridge,br=wrtbridge0,id=hn0 -device e1000,netdev=hn0,id=nic1 \
 					-netdev user,id=hn1 -device e1000,netdev=hn1,id=nic2
 			;;
 		yocto)
