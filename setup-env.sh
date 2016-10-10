@@ -82,11 +82,11 @@ create_namespace_env () {
 	error_check_sudo "ip link set dev yocwrt-tap0 up"
 	error_check_sudo "ip link set dev wrtbridge0 up"
 	error_check_sudo "ip link set dev yoctobridge0 up"
-	error_check_sudo "ip netns exec outer_ns ip link set dev wrtbridge1"
-	error_check_sudo "ip netns exec outer_ns ip link set dev yoctobridge1"
-	error_check_sudo "ip netns exec outer_ns ip link set dev wrtwrt-tap1"
-	error_check_sudo "ip netns exec outer_ns ip link set dev wrtyoc-tap1"
-	error_check_sudo "ip netns exec outer_ns ip link set dev yocwrt-tap1"
+	error_check_sudo "ip netns exec outer_ns ip link set dev wrtbridge1 up"
+	error_check_sudo "ip netns exec outer_ns ip link set dev yoctobridge1 up"
+	error_check_sudo "ip netns exec outer_ns ip link set dev wrtwrt-tap1 up"
+	error_check_sudo "ip netns exec outer_ns ip link set dev wrtyoc-tap1 up"
+	error_check_sudo "ip netns exec outer_ns ip link set dev yocwrt-tap1 up"
 }
 
 get_interfaces_fds () {
