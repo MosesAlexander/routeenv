@@ -106,6 +106,8 @@ get_interfaces_fds () {
 }
 
 cleanup_namespace_env () {
+	sudo ip link set dev wrtbridge0 down
+	sudo ip link set dev yoctobridge0 down
 	sudo ip link del veth0
 	sudo brctl delbr wrtbridge0
 	sudo brctl delbr yoctobridge0
