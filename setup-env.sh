@@ -173,7 +173,7 @@ start_qemu () {
 			sudo qemu-system-x86_64 -kernel env/openwrt/openwrt-kernel \
 					-drive file=env/openwrt/rootfs$NETNSNUM-openwrt.ext4,id=d0,if=none \
 					-device ide-hd,drive=d0,bus=ide.0 -append "root=/dev/sda console=ttyS0" \
-					-nographic -serial mon:stdio -enable-kvm -smp cpus=2 \
+					-nographic -serial mon:stdio -enable-kvm \
 					-cpu host -M q35 -smp cpus=2 \
 					-netdev tap,id=hn0,fd=$INFD_YOC \
 					-device e1000,netdev=hn0,id=nic0 \
@@ -195,7 +195,7 @@ start_qemu () {
 			sudo qemu-system-x86_64 -kernel env/yocto/yocto-kernel \
 					-drive file=env/yocto/rootfs$NETNSNUM-yocto.ext4,id=d0,if=none \
 					-device ide-hd,drive=d0,bus=ide.0 -append "root=/dev/sda console=ttyS0" \
-					-nographic -serial mon:stdio -enable-kvm -smp cpus=2 \
+					-nographic -serial mon:stdio -enable-kvm \
 					-cpu host -M q35 -smp cpus=2 \
 					-netdev tap,id=hn0,fd=$INFD \
 					-device e1000,netdev=hn0,id=nic0
