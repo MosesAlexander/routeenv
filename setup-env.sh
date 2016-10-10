@@ -76,6 +76,17 @@ create_namespace_env () {
 	error_check_sudo "ip netns exec outer_ns brctl addif wrtbridge1 wrtwrt-tap1"
 	error_check_sudo "ip netns exec outer_ns brctl addif yoctobridge1 wrtyoc-tap1"
 	error_check_sudo "ip netns exec outer_ns brctl addif yoctobridge1 yocwrt-tap1"
+	# raise them up
+	error_check_sudo "ip link set dev wrtwrt-tap0 up"
+	error_check_sudo "ip link set dev wrtyoc-tap0 up"
+	error_check_sudo "ip link set dev yocwrt-tap0 up"
+	error_check_sudo "ip link set dev wrtbridge0 up"
+	error_check_sudo "ip link set dev yoctobridge0 up"
+	error_check_sudo "ip netns exec outer_ns ip link set dev wrtbridge1"
+	error_check_sudo "ip netns exec outer_ns ip link set dev yoctobridge1"
+	error_check_sudo "ip netns exec outer_ns ip link set dev wrtwrt-tap1"
+	error_check_sudo "ip netns exec outer_ns ip link set dev wrtyoc-tap1"
+	error_check_sudo "ip netns exec outer_ns ip link set dev yocwrt-tap1"
 }
 
 get_interfaces_fds () {
