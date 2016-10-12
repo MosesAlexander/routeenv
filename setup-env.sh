@@ -109,9 +109,9 @@ start_qemu () {
 					-device ide-hd,drive=d0,bus=ide.0 -append "root=/dev/sda console=ttyS0" \
 					-nographic -serial mon:stdio -enable-kvm \
 					-cpu kvm64 -M q35 \
-					-netdev tap,id=nic0,ifname=wrtyoc-tap$NETNSNUM,script=conf/helpers/qemu-ifup-yoctobridge$NETNSNUM,downscript=conf/helpers/qemu-ifdown-qemu-ifup-yoctobridge$NETNSNUM \
+					-netdev tap,id=nic0,ifname=wrtyoc-tap$NETNSNUM,script=conf/helpers/qemu-ifup-yoctobridge$NETNSNUM,downscript=conf/helpers/qemu-ifdown-yoctobridge$NETNSNUM \
 					-device e1000,netdev=nic0 \
-					-netdev tap,id=nic1,ifname=wrtwrt-tap$NETNSNUM,script=conf/helpers/qemu-ifup-wrtbridge$NETNSNUM,downscript=conf/helpers/qemu-ifup-wrtbridge$NETNSNUM \
+					-netdev tap,id=nic1,ifname=wrtwrt-tap$NETNSNUM,script=conf/helpers/qemu-ifup-wrtbridge$NETNSNUM,downscript=conf/helpers/qemu-ifdown-wrtbridge$NETNSNUM \
 					-device e1000,netdev=nic1
 
 			;;
@@ -126,7 +126,7 @@ start_qemu () {
 					-device ide-hd,drive=d0,bus=ide.0 -append "root=/dev/sda console=ttyS0" \
 					-nographic -serial mon:stdio -enable-kvm \
 					-cpu kvm64 -M q35 \
-					-netdev tap,id=nic0,ifname=yocwrt-tap$NETNSNUM,script=conf/helpers/qemu-ifup-yoctobridge$NETNSNUM,downscript=conf/helpers/qemu-ifdown-qemu-ifup-yoctobridge$NETNSNUM \
+					-netdev tap,id=nic0,ifname=yocwrt-tap$NETNSNUM,script=conf/helpers/qemu-ifup-yoctobridge$NETNSNUM,downscript=conf/helpers/qemu-ifdown-yoctobridge$NETNSNUM \
 					-device e1000,netdev=nic0
 			;;
 		*)
