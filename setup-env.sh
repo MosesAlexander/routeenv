@@ -49,6 +49,8 @@ create_namespace_env () {
 	# communicate with each other coming from separate net namespaces
 	error_check_sudo "ip link add veth0 type veth peer name veth1"
 	error_check_sudo "ip link set veth1 netns outer_ns"
+	error_check_sudo "ip link set veth0 up"
+	error_check_sudo "ip netns exec outer_ns ip link set veth1 up"
 	# the idea is to have 2 bridges in each network namespace,
 	# one so the yocto host can communicate with the router,
 	# the other so the routers can communicate with eachother.
