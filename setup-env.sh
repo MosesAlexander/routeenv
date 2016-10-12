@@ -26,11 +26,11 @@ copy_images () {
 	mkdir -p env/openwrt env/yocto
 
 	cp -v ${OPENWRT_PATH}/bin/x86/openwrt-x86-64-vmlinuz env/openwrt/openwrt-kernel
-	cp -v ${OPENWRT_PATH}/bin/x86/openwrt-x86-64-rootfs-ext4.img env/openwrt/rootfs1-openwrt.ext4
-	cp -v --reflink env/openwrt/rootfs1-openwrt.ext4 env/openwrt/rootfs2-openwrt.ext4
+	cp -v ${OPENWRT_PATH}/bin/x86/openwrt-x86-64-rootfs-ext4.img env/openwrt/rootfs0-openwrt.ext4
+	cp -v --reflink env/openwrt/rootfs0-openwrt.ext4 env/openwrt/rootfs1-openwrt.ext4
 	cp -v ${YOCTO_PATH}/tmp/deploy/images/qemux86-64/bzImage env/yocto/yocto-kernel
-	cp -v ${YOCTO_PATH}/tmp/deploy/images/qemux86-64/core-image-full-cmdline-qemux86-64.ext4 env/yocto/rootfs1-yocto.ext4
-	cp -v --reflink env/yocto/rootfs1-yocto.ext4 env/yocto/rootfs2-yocto.ext4
+	cp -v ${YOCTO_PATH}/tmp/deploy/images/qemux86-64/core-image-full-cmdline-qemux86-64.ext4 env/yocto/rootfs0-yocto.ext4
+	cp -v --reflink env/yocto/rootfs0-yocto.ext4 env/yocto/rootfs1-yocto.ext4
 }
 
 error_check_sudo () {
