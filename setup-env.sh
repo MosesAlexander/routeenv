@@ -126,21 +126,6 @@ start_qemu () {
 	# so that we can assign them to VM instance
 	get_interfaces_fds
 
-	echo "MAC address should end with:"
-	read MACEND
-	if [ -z $MACEND ]; then
-		echo "No number provided."
-		exit 1;
-	fi
-	MACEND_VAL=$(echo "ibase=16; ${MACEND^^}" | bc)
-
-	if [ $MACEND_VAL -gt 255 ]; then
-		echo "Invalid number, must be a hexadecimal number no greater than ff"
-		exit 1;
-	fi
-
-	echo "MAC is $MACEND"
-
 	echo "VM type: openwrt or yocto:"
 	read VMTYPE
 
