@@ -58,51 +58,11 @@ create_namespace_env () {
 	error_check_sudo "brctl addbr wrtbridge0"
 	error_check_sudo "brctl addbr yoctobridge0"
 	error_check_sudo "brctl addif wrtbridge0 veth0"
-	# 3 types of tap devices as per their roles:
-	# - router-to-router L2 communication
-	# - router-to-yoctohost L2 communication
-	# - yoctohost-to-router L2 communication
-	error_check_sudo "ip tuntap add name wrtwrt-tap0 mode tap"
-	error_check_sudo "ip tuntap add name wrtyoc-tap0 mode tap"
-	error_check_sudo "ip tuntap add name yocwrt-tap0 mode tap"
-	# outer_ns tap devices
-	error_check_sudo "ip netns exec outer_ns ip tuntap add name wrtwrt-tap1 mode tap"
-	error_check_sudo "ip netns exec outer_ns ip tuntap add name wrtyoc-tap1 mode tap"
-	error_check_sudo "ip netns exec outer_ns ip tuntap add name yocwrt-tap1 mode tap"
-	# wire the bridges for both network namespaces
-	error_check_sudo "brctl addif wrtbridge0 wrtwrt-tap0"
-	error_check_sudo "brctl addif yoctobridge0 wrtyoc-tap0"
-	error_check_sudo "brctl addif yoctobridge0 yocwrt-tap0"
-	error_check_sudo "ip netns exec outer_ns brctl addif wrtbridge1 wrtwrt-tap1"
-	error_check_sudo "ip netns exec outer_ns brctl addif yoctobridge1 wrtyoc-tap1"
-	error_check_sudo "ip netns exec outer_ns brctl addif yoctobridge1 yocwrt-tap1"
-	# raise them up
-	error_check_sudo "ip link set dev wrtwrt-tap0 up"
-	error_check_sudo "ip link set dev wrtyoc-tap0 up"
-	error_check_sudo "ip link set dev yocwrt-tap0 up"
+	# set bridges up
 	error_check_sudo "ip link set dev wrtbridge0 up"
 	error_check_sudo "ip link set dev yoctobridge0 up"
 	error_check_sudo "ip netns exec outer_ns ip link set dev wrtbridge1 up"
 	error_check_sudo "ip netns exec outer_ns ip link set dev yoctobridge1 up"
-	error_check_sudo "ip netns exec outer_ns ip link set dev wrtwrt-tap1 up"
-	error_check_sudo "ip netns exec outer_ns ip link set dev wrtyoc-tap1 up"
-	error_check_sudo "ip netns exec outer_ns ip link set dev yocwrt-tap1 up"
-}
-
-get_interfaces_fds () {
-	wrtwrttap0_fd=$(ip addr | grep wrtwrt-tap0 | awk '{print $1}')
-	wrtwrttap0_fd=`echo $wrtwrttap0_fd | awk '{print substr($wrtwrttap0_fd, 0, length($wrtwrttap0_fd)-1)}'`
-	wrtyoctap0_fd=$(ip addr | grep wrtyoc-tap0 | awk '{print $1}')
-	wrtyoctap0_fd=`echo $wrtyoctap0_fd | awk '{print substr($wrtyoctap0_fd, 0, length($wrtyoctap0_fd)-1)}'`
-	yocwrttap0_fd=$(ip addr | grep yocwrt-tap0 | awk '{print $1}')
-	yocwrttap0_fd=`echo $yocwrttap0_fd | awk '{print substr($yocwrttap0_fd, 0, length($yocwrttap0_fd)-1)}'`
-	wrtwrttap1_fd=$(sudo ip netns exec outer_ns ip addr | grep wrtwrt-tap1 | awk '{print $1}')
-	wrtwrttap1_fd=`echo $wrtwrttap1_fd | awk '{print substr($wrtwrttap1_fd, 0, length($wrtwrttap1_fd)-1)}'`
-	wrtyoctap1_fd=$(sudo ip netns exec outer_ns ip addr | grep wrtyoc-tap1 | awk '{print $1}')
-	wrtyoctap1_fd=`echo $wrtyoctap1_fd | awk '{print substr($wrtyoctap1_fd, 0, length($wrtyoctap1_fd)-1)}'`
-	yocwrttap1_fd=$(sudo ip netns exec outer_ns ip addr | grep yocwrt-tap1 | awk '{print $1}')
-	yocwrttap1_fd=`echo $yocwrttap1_fd | awk '{print substr($yocwrttap1_fd, 0, length($yocwrttap1_fd)-1)}'`
-
 }
 
 cleanup_namespace_env () {
@@ -111,9 +71,6 @@ cleanup_namespace_env () {
 	sudo ip link del veth0
 	sudo brctl delbr wrtbridge0
 	sudo brctl delbr yoctobridge0
-	sudo ip link del wrtwrt-tap0
-	sudo ip link del wrtyoc-tap0
-	sudo ip link del yocwrt-tap0
 	sudo ip netns del outer_ns
 }
 
