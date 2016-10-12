@@ -122,14 +122,10 @@ cleanup_images () {
 }
 
 start_qemu () {
-	# gotta get the dynamically assigned fds for all tap interfaces
-	# so that we can assign them to VM instance
-	get_interfaces_fds
-
 	echo "VM type: openwrt or yocto:"
 	read VMTYPE
 
-	echo "VM net namespace 1 or 2:"
+	echo "VM net namespace 0 or 1:"
 	read NETNSNUM
 
 	if [ -z $NETNSNUM ]; then
@@ -137,8 +133,8 @@ start_qemu () {
 		exit 1
 	fi
 
-	if [ $NETNSNUM != "1" ] && [ $NETNSNUM != "2" ]; then
-		echo "Invalid network namespace number, must be 1 or 2."
+	if [ $NETNSNUM != "0" ] && [ $NETNSNUM != "1" ]; then
+		echo "Invalid network namespace number, must be 0 or 1."
 		exit 1
 	fi
 
@@ -149,23 +145,15 @@ start_qemu () {
 				exit 1
 			fi
 
-			if [ $NETNSNUM == "1" ]; then
-				INFD_YOC=$wrtyoctap0_fd
-				INFD_WRT=$wrtwrttap0_fd
-			elif [ $NETNSNUM == "2" ]; then
-				INFD_YOC=$wrtyoctap1_fd
-				INFD_WRT=$wrtwrttap1_fd
-			fi
-
 			sudo qemu-system-x86_64 -kernel env/openwrt/openwrt-kernel \
 					-drive file=env/openwrt/rootfs$NETNSNUM-openwrt.ext4,id=d0,if=none \
 					-device ide-hd,drive=d0,bus=ide.0 -append "root=/dev/sda console=ttyS0" \
 					-nographic -serial mon:stdio -enable-kvm \
-					-cpu host -M q35 \
-					-netdev tap,id=hn0,fd=$INFD_YOC \
-					-device e1000,netdev=hn0,id=nic0 \
-					-netdev tap,id=hn1,fd=$INFD_WRT \
-					-device e1000,netdev=hn1,id=nic1
+					-cpu kvm64 -M q35 \
+					-netdev tap,id=nic0,ifname=wrtwrt-tap$NETNSNUM,script=conf/helpers/qemu-ifup-wrtbridge$NETNSNUM,downscript=conf/helpers/qemu-ifup-wrtbridge$NETNSNUM \
+					-device e1000,netdev=nic0 \
+					-netdev tap,id=nic1,ifname=wrtyoc-tap$NETNSNUM,script=conf/helpers/qemu-ifup-yoctobridge$NETNSNUM,downscript=conf/helpers/qemu-ifdown-qemu-ifup-yoctobridge$NETNSNUM \
+					-device e1000,netdev=nic1
 			;;
 		yocto)
 			if [ ! -e env/yocto/yocto-kernel ] | [ ! -e env/openwrt/rootfs$NETNSNUM-openwrt.ext4 ]; then
@@ -173,18 +161,12 @@ start_qemu () {
 				exit 1
 			fi
 
-			if [ $NETNSNUM == "1" ]; then
-				INFD=$yocwrttap0_fd
-			elif [ $NETNSNUM == "2" ]; then
-				INFD=$yocwrttap1_fd
-			fi
-
 			sudo qemu-system-x86_64 -kernel env/yocto/yocto-kernel \
 					-drive file=env/yocto/rootfs$NETNSNUM-yocto.ext4,id=d0,if=none \
 					-device ide-hd,drive=d0,bus=ide.0 -append "root=/dev/sda console=ttyS0" \
 					-nographic -serial mon:stdio -enable-kvm \
-					-cpu host -M q35 \
-					-netdev tap,id=hn0,fd=$INFD \
+					-cpu kvm64 -M q35 \
+					-netdev tap,id=nic0,ifname=yocwrt-tap$NETNSNUM,script=conf/helpers/qemu-ifup-yoctobridge$NETNSNUM,downscript=conf/helpers/qemu-ifdown-qemu-ifup-yoctobridge$NETNSNUM \
 					-device e1000,netdev=hn0,id=nic0
 			;;
 		*)
