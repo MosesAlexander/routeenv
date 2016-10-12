@@ -1,8 +1,17 @@
 #!/bin/sh
+set -x
 
-echo "Executing /etc/qemu-ifup"
-echo "Bringing up $1 for bridged mode..."
-sudo /usr/bin/ip link set $1 up promisc on
-echo "Adding $1 to yoctobridge1..."
-sudo /usr/bin/brctl addif yoctobridge1 $1
-sleep 2
+switch=yoctobridge1
+
+if [ -n "$1" ];then
+        #tunctl -u `whoami` -t $1
+        ip tuntap add $1 mode tap user `whoami`
+        ip link set $1 up
+        sleep 0.5s
+        #brctl addif $switch $1
+        ip link set $1 master $switch
+        exit 0
+else
+        echo "Error: no interface specified"
+        exit 1
+fi

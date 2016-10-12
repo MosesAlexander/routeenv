@@ -126,7 +126,7 @@ start_qemu () {
 					-nographic -serial mon:stdio -enable-kvm \
 					-cpu kvm64 -M q35 \
 					-netdev tap,id=nic0,ifname=yocwrt-tap$NETNSNUM,script=conf/helpers/qemu-ifup-yoctobridge$NETNSNUM,downscript=conf/helpers/qemu-ifdown-qemu-ifup-yoctobridge$NETNSNUM \
-					-device e1000,netdev=hn0,id=nic0
+					-device e1000,netdev=nic0
 			;;
 		*)
 			echo "Error, invalid VM type!"
