@@ -154,6 +154,24 @@ start_qemu () {
 
 }
 
+save_yocto_network_conf () {
+	mkdir yocdir0 yocdir1 2>/dev/null
+	sudo mount -v env/yocto/rootfs0-yocto.ext4 yocdir0
+	sudo mount -v env/yocto/rootfs1-yocto.ext4 yocdir1
+	sudo cp -v yocdir0/etc/network/interfaces conf/yocinterfaces0
+	sudo cp -v yocdir1/etc/network/interfaces conf/yocinterfaces1
+	sudo umount -v  yocdir0 yocdir1
+}
+
+restore_yocto_network_conf () {
+	mkdir yocdir0 yocdir1 2>/dev/null
+	sudo mount -v env/yocto/rootfs0-yocto.ext4 yocdir0
+	sudo mount -v env/yocto/rootfs1-yocto.ext4 yocdir1
+	sudo cp -v conf/yocinterfaces0 yocdir0/etc/network/interfaces
+	sudo cp -v conf/yocinterfaces1 yocdir1/etc/network/interfaces
+	sudo umount -v yocdir0 yocdir1
+}
+
 case "$1" in
 	-cpall|--copy-images-all)
 		echo "Copying images"
@@ -176,6 +194,14 @@ case "$1" in
 	-ns|--create-nsenv)
 		echo "Setting ns env"
 		create_namespace_env
+		;;
+	-sncy|--save-network-conf-yocto)
+		echo "Saving yocto network configuration"
+		save_yocto_network_conf
+		;;
+	-rncy|--restore-network-conf-yocto)
+		echo "Restoring yocto network configuration"
+		restore_yocto_network_conf
 		;;
 	-q|--start-qemu)
 		echo "Starting qemu"
@@ -209,6 +235,8 @@ case "$1" in
 		echo "-cpy|--copy-images-yocto (copy kernel+rootfs for yocto builds)"
 		echo "-cpo|--copy-images-openwrt (copy kernel+rootfs for openwrt builds)"
 		echo "-ns|--create-nsenv (create outer_ns net namespace with yocto and openwrt bridges)"
+		echo "-sncy|--save-network-conf-yocto (save yocto network configuration from /etc/network/interfaces"
+		echo "-rncy|--restore-network-conf-yocto (restore yocto network configuration to /etc/network/interfaces"
 		echo "For cleaning:"
 		echo "-clia|--clean-images-all (remove all kernel and rootfs images)"
 		echo "-cliy|--clean-images-yocto (remove yocto kernel and rootfs images"
