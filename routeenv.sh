@@ -172,6 +172,35 @@ restore_yocto_network_conf () {
 	sudo umount -v yocdir0 yocdir1
 }
 
+save_openwrt_network_conf () {
+	mkdir wrtdir0 wrtdir1 2>/dev/null
+	mkdir -p conf/config0 conf/config1 2>/dev/null
+	sudo mount -v env/openwrt/rootfs0-openwrt.ext4 wrtdir0
+	sudo mount -v env/openwrt/rootfs1-openwrt.ext4 wrtdir1
+	# static IP addresses, firewall rules, hostname
+	sudo cp -v wrtdir0/etc/config/network conf/config0/network
+	sudo cp -v wrtdir1/etc/config/network conf/config1/network
+	sudo cp -v wrtdir0/etc/config/firewall conf/config0/firewall
+	sudo cp -v wrtdir1/etc/config/firewall conf/config1/firewall
+	sudo cp -v wrtdir0/etc/config/system conf/config0/system
+	sudo cp -v wrtdir1/etc/config/system conf/config1/system
+	sudo umount -v wrtdir0 wrtdir1
+}
+
+restore_openwrt_network_conf () {
+	mkdir wrtdir0 wrtdir1 2>/dev/null
+	mkdir -p conf/config0 conf/config1 2>/dev/null
+	sudo mount -v env/openwrt/rootfs0-openwrt.ext4 wrtdir0
+	sudo mount -v env/openwrt/rootfs1-openwrt.ext4 wrtdir1
+	sudo cp -v conf/config0/network wrtdir0/etc/config/network
+	sudo cp -v conf/config1/network wrtdir1/etc/config/network
+	sudo cp -v conf/config0/firewall wrtdir0/etc/config/firewall
+	sudo cp -v conf/config1/firewall wrtdir1/etc/config/firewall
+	sudo cp -v conf/config0/system wrtdir0/etc/config/system
+	sudo cp -v conf/config1/system wrtdir1/etc/config/system
+	sudo umount -v wrtdir0 wrtdir1
+}
+
 case "$1" in
 	-cpall|--copy-images-all)
 		echo "Copying images"
@@ -202,6 +231,14 @@ case "$1" in
 	-rncy|--restore-network-conf-yocto)
 		echo "Restoring yocto network configuration"
 		restore_yocto_network_conf
+		;;
+	-snco|--save-network-conf-openwrt)
+		echo "Saving openwrt network configuration"
+		save_openwrt_network_conf
+		;;
+	-rnco|--restore-network-conf-openwrt)
+		echo "Restoring openwrt network configuration"
+		restore_openwrt_network_conf
 		;;
 	-q|--start-qemu)
 		echo "Starting qemu"
@@ -237,6 +274,8 @@ case "$1" in
 		echo "-ns|--create-nsenv (create outer_ns net namespace with yocto and openwrt bridges)"
 		echo "-sncy|--save-network-conf-yocto (save yocto network configuration from /etc/network/interfaces"
 		echo "-rncy|--restore-network-conf-yocto (restore yocto network configuration to /etc/network/interfaces"
+		echo "-snco|--save-network-conf-openwrt (save openwrt network/firewall/system configuration)"
+		echo "-rnco|--restore-network-conf-openwrt (restore openwrt network/firewall/system configuration)"
 		echo "For cleaning:"
 		echo "-clia|--clean-images-all (remove all kernel and rootfs images)"
 		echo "-cliy|--clean-images-yocto (remove yocto kernel and rootfs images"
