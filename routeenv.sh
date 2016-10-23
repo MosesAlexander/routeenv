@@ -156,10 +156,13 @@ start_qemu () {
 
 save_yocto_network_conf () {
 	mkdir yocdir0 yocdir1 2>/dev/null
+	mkdir -p conf/yocto
 	sudo mount -v env/yocto/rootfs0-yocto.ext4 yocdir0
 	sudo mount -v env/yocto/rootfs1-yocto.ext4 yocdir1
-	sudo cp -v yocdir0/etc/network/interfaces conf/yocinterfaces0
-	sudo cp -v yocdir1/etc/network/interfaces conf/yocinterfaces1
+	sudo cp -v yocdir0/etc/network/interfaces conf/yocto/interfaces0
+	sudo cp -v yocdir1/etc/network/interfaces conf/yocto/interfaces1
+	sudo cp -v yocdir0/etc/hostname conf/yocto/hostname0
+	sudo cp -v yocdir1/etc/hostname conf/yocto/hostname1
 	sudo umount -v  yocdir0 yocdir1
 }
 
@@ -167,37 +170,38 @@ restore_yocto_network_conf () {
 	mkdir yocdir0 yocdir1 2>/dev/null
 	sudo mount -v env/yocto/rootfs0-yocto.ext4 yocdir0
 	sudo mount -v env/yocto/rootfs1-yocto.ext4 yocdir1
-	sudo cp -v conf/yocinterfaces0 yocdir0/etc/network/interfaces
-	sudo cp -v conf/yocinterfaces1 yocdir1/etc/network/interfaces
+	sudo cp -v conf/yocto/interfaces0 yocdir0/etc/network/interfaces
+	sudo cp -v conf/yocto/interfaces1 yocdir1/etc/network/interfaces
+	sudo cp -v conf/yocto/hostname0 yocdir0/etc/hostname
+	sudo cp -v conf/yocto/hostname1 yocdir1/etc/hostname
 	sudo umount -v yocdir0 yocdir1
 }
 
 save_openwrt_network_conf () {
 	mkdir wrtdir0 wrtdir1 2>/dev/null
-	mkdir -p conf/config0 conf/config1 2>/dev/null
+	mkdir -p conf/openwrt/config0 conf/openwrt/config1 2>/dev/null
 	sudo mount -v env/openwrt/rootfs0-openwrt.ext4 wrtdir0
 	sudo mount -v env/openwrt/rootfs1-openwrt.ext4 wrtdir1
 	# static IP addresses, firewall rules, hostname
-	sudo cp -v wrtdir0/etc/config/network conf/config0/network
-	sudo cp -v wrtdir1/etc/config/network conf/config1/network
-	sudo cp -v wrtdir0/etc/config/firewall conf/config0/firewall
-	sudo cp -v wrtdir1/etc/config/firewall conf/config1/firewall
-	sudo cp -v wrtdir0/etc/config/system conf/config0/system
-	sudo cp -v wrtdir1/etc/config/system conf/config1/system
+	sudo cp -v wrtdir0/etc/config/network conf/openwrt/config0/network
+	sudo cp -v wrtdir1/etc/config/network conf/openwrt/config1/network
+	sudo cp -v wrtdir0/etc/config/firewall conf/openwrt/config0/firewall
+	sudo cp -v wrtdir1/etc/config/firewall conf/openwrt/config1/firewall
+	sudo cp -v wrtdir0/etc/config/system conf/openwrt/config0/system
+	sudo cp -v wrtdir1/etc/config/system conf/openwrt/config1/system
 	sudo umount -v wrtdir0 wrtdir1
 }
 
 restore_openwrt_network_conf () {
 	mkdir wrtdir0 wrtdir1 2>/dev/null
-	mkdir -p conf/config0 conf/config1 2>/dev/null
 	sudo mount -v env/openwrt/rootfs0-openwrt.ext4 wrtdir0
 	sudo mount -v env/openwrt/rootfs1-openwrt.ext4 wrtdir1
-	sudo cp -v conf/config0/network wrtdir0/etc/config/network
-	sudo cp -v conf/config1/network wrtdir1/etc/config/network
-	sudo cp -v conf/config0/firewall wrtdir0/etc/config/firewall
-	sudo cp -v conf/config1/firewall wrtdir1/etc/config/firewall
-	sudo cp -v conf/config0/system wrtdir0/etc/config/system
-	sudo cp -v conf/config1/system wrtdir1/etc/config/system
+	sudo cp -v conf/openwrt/config0/network wrtdir0/etc/config/network
+	sudo cp -v conf/openwrt/config1/network wrtdir1/etc/config/network
+	sudo cp -v conf/openwrt/config0/firewall wrtdir0/etc/config/firewall
+	sudo cp -v conf/openwrt/config1/firewall wrtdir1/etc/config/firewall
+	sudo cp -v conf/openwrt/config0/system wrtdir0/etc/config/system
+	sudo cp -v conf/openwrt/config1/system wrtdir1/etc/config/system
 	sudo umount -v wrtdir0 wrtdir1
 }
 
