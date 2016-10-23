@@ -1,0 +1,10 @@
+auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet static
+	address 192.168.5.2
+	netmask 255.255.255.0
+	hwaddress ether 52:04:1f:21:a4:21
+
+up route add default gw 192.168.5.1 dev eth0

@@ -163,6 +163,7 @@ save_yocto_network_conf () {
 	sudo cp -v yocdir1/etc/network/interfaces conf/yocto/interfaces1
 	sudo cp -v yocdir0/etc/hostname conf/yocto/hostname0
 	sudo cp -v yocdir1/etc/hostname conf/yocto/hostname1
+	sync
 	sudo umount -v  yocdir0 yocdir1
 }
 
@@ -174,6 +175,7 @@ restore_yocto_network_conf () {
 	sudo cp -v conf/yocto/interfaces1 yocdir1/etc/network/interfaces
 	sudo cp -v conf/yocto/hostname0 yocdir0/etc/hostname
 	sudo cp -v conf/yocto/hostname1 yocdir1/etc/hostname
+	sync
 	sudo umount -v yocdir0 yocdir1
 }
 
@@ -189,6 +191,7 @@ save_openwrt_network_conf () {
 	sudo cp -v wrtdir1/etc/config/firewall conf/openwrt/config1/firewall
 	sudo cp -v wrtdir0/etc/config/system conf/openwrt/config0/system
 	sudo cp -v wrtdir1/etc/config/system conf/openwrt/config1/system
+	sync
 	sudo umount -v wrtdir0 wrtdir1
 }
 
@@ -202,6 +205,7 @@ restore_openwrt_network_conf () {
 	sudo cp -v conf/openwrt/config1/firewall wrtdir1/etc/config/firewall
 	sudo cp -v conf/openwrt/config0/system wrtdir0/etc/config/system
 	sudo cp -v conf/openwrt/config1/system wrtdir1/etc/config/system
+	sync
 	sudo umount -v wrtdir0 wrtdir1
 }
 
