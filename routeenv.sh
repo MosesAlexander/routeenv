@@ -85,6 +85,41 @@ cleanup_namespace_env () {
 	sudo ip netns del outer_ns
 }
 
+create_network_env_ovs () {
+	# veth device acting as a wire between the routers
+	error_check_sudo "ip link add veth0 type veth peer name veth1"
+	error_check_sudo "ip link set veth0 up"
+	error_check_sudo "ip link set veth1 up"
+
+	# create ovs switches and attach the wire between the routers
+	error_check_sudo "ovs-vsctl add-br wrtbridge0"
+	error_check_sudo "ovs-vsctl add-br yoctobridge0"
+	error_check_sudo "ovs-vsctl add-br wrtbridge1"
+	error_check_sudo "ovs-vsctl add-br yoctobridge1"
+	error_check_sudo "ovs-vsctl add-port wrtbridge0 veth0"
+	error_check_sudo "ovs-vsctl add-port wrtbridge1 veth1"
+
+	# set bridges up
+	error_check_sudo "ip link set dev wrtbridge0 up"
+	error_check_sudo "ip link set dev yoctobridge0 up"
+	error_check_sudo "ip link set dev wrtbridge1 up"
+	error_check_sudo "ip link set dev yoctobridge1 up"
+}
+
+cleanup_network_env_ovs () {
+	sudo ip link set dev wrtbridge0 down
+	sudo ip link set dev wrtbridge1 down
+	sudo ip link set dev veth0 down
+	sudo ip link set dev veth1 down
+	sudo ovs-vsctl del-port wrtbridge0 veth0
+	sudo ovs-vsctl del-port wrtbridge1 veth1
+	sudo ip link del veth0
+	sudo ovs-vsctl del-br wrtbridge0
+	sudo ovs-vsctl del-br wrtbridge1
+	sudo ovs-vsctl del-br yoctobridge0
+	sudo ovs-vsctl del-br yoctobridge1
+}
+
 cleanup_images_openwrt () {
 	rm env/openwrt/*
 }
@@ -97,6 +132,8 @@ cleanup_images_all () {
 	cleanup_images_openwrt
 	cleanup_images_yocto
 }
+
+OVSENV="0"
 
 start_qemu () {
 	echo "VM type: openwrt or yocto:"
@@ -115,6 +152,11 @@ start_qemu () {
 		exit 1
 	fi
 
+	if [ $OVSENV != "0" ]; then
+		echo "OVS environment present."
+		ovsprefix="ovs-"
+	fi
+
 	case "$VMTYPE" in
 		openwrt)
 			if [ ! -e env/openwrt/openwrt-kernel ] | [ ! -e env/yocto/rootfs$NETNSNUM-yocto.ext4 ]; then
@@ -127,9 +169,9 @@ start_qemu () {
 					-device ide-hd,drive=d0,bus=ide.0 -append "root=/dev/sda console=ttyS0" \
 					-nographic -serial mon:stdio -enable-kvm \
 					-cpu kvm64 -M q35 \
-					-netdev tap,id=nic0,ifname=wrtyoc-tap$NETNSNUM,script=conf/helpers/qemu-ifup-yoctobridge$NETNSNUM,downscript=conf/helpers/qemu-ifdown-yoctobridge$NETNSNUM \
+					-netdev tap,id=nic0,ifname=wrtyoc-tap$NETNSNUM,script=conf/helpers/${ovsprefix}qemu-ifup-yoctobridge$NETNSNUM,downscript=conf/helpers/${ovsprefix}qemu-ifdown-yoctobridge$NETNSNUM \
 					-device e1000,netdev=nic0 \
-					-netdev tap,id=nic1,ifname=wrtwrt-tap$NETNSNUM,script=conf/helpers/qemu-ifup-wrtbridge$NETNSNUM,downscript=conf/helpers/qemu-ifdown-wrtbridge$NETNSNUM \
+					-netdev tap,id=nic1,ifname=wrtwrt-tap$NETNSNUM,script=conf/helpers/${ovsprefix}qemu-ifup-wrtbridge$NETNSNUM,downscript=conf/helpers/${ovsprefix}qemu-ifdown-wrtbridge$NETNSNUM \
 					-device e1000,netdev=nic1
 
 			;;
@@ -144,7 +186,7 @@ start_qemu () {
 					-device ide-hd,drive=d0,bus=ide.0 -append "root=/dev/sda console=ttyS0" \
 					-nographic -serial mon:stdio -enable-kvm \
 					-cpu kvm64 -M q35 \
-					-netdev tap,id=nic0,ifname=yocwrt-tap$NETNSNUM,script=conf/helpers/qemu-ifup-yoctobridge$NETNSNUM,downscript=conf/helpers/qemu-ifdown-yoctobridge$NETNSNUM \
+					-netdev tap,id=nic0,ifname=yocwrt-tap$NETNSNUM,script=conf/helpers/${ovsprefix}qemu-ifup-yoctobridge$NETNSNUM,downscript=conf/helpers/${ovsprefix}qemu-ifdown-yoctobridge$NETNSNUM \
 					-device e1000,netdev=nic0
 			;;
 		*)
@@ -232,6 +274,10 @@ case "$1" in
 		echo "Setting ns env"
 		create_namespace_env
 		;;
+	-nso|--create-ovs-env)
+		echo "Setting up ovs network environment"
+		create_network_env_ovs
+		;;
 	-sncy|--save-network-conf-yocto)
 		echo "Saving yocto network configuration"
 		save_yocto_network_conf
@@ -252,6 +298,11 @@ case "$1" in
 		echo "Starting qemu"
 		start_qemu
 		;;
+	-qo|--start-qemu-ovs)
+		echo "Starting qemu with ovs environment"
+		OVSENV="1"
+		start_qemu
+		;;
 	-cliy|--clean-images-yocto)
 		echo "Cleaning up yocto images"
 		cleanup_images_yocto
@@ -268,6 +319,10 @@ case "$1" in
 		echo "Cleaning up namespaces"
 		cleanup_namespace_env
 		;;
+	--clean-network-env-ovs)
+		echo "Cleaning up ovs network environment"
+		cleanup_network_env_ovs
+		;;
 	--clean-all)
 		echo "Removing images and namespaces"
 		cleanup_images
@@ -276,10 +331,12 @@ case "$1" in
 	*)
 		echo "Must supply one parameter:"
 		echo "-q|--start-qemu (start qemu instance of openwrt or yocto)"
+		echo "-qo|--start-qemu-ovs (start qemu using ovs qemu-ifup/down helper scripts)"
 		echo "-cpall|--copy-images-all (copy kernel+rootfs for openwrt and yocto builds)"
 		echo "-cpy|--copy-images-yocto (copy kernel+rootfs for yocto builds)"
 		echo "-cpo|--copy-images-openwrt (copy kernel+rootfs for openwrt builds)"
 		echo "-ns|--create-nsenv (create outer_ns net namespace with yocto and openwrt bridges)"
+		echo "-nso|--create-ovs-env (create ovs network bridges)"
 		echo "-sncy|--save-network-conf-yocto (save yocto network configuration from /etc/network/interfaces"
 		echo "-rncy|--restore-network-conf-yocto (restore yocto network configuration to /etc/network/interfaces"
 		echo "-snco|--save-network-conf-openwrt (save openwrt network/firewall/system configuration)"
@@ -289,6 +346,7 @@ case "$1" in
 		echo "-cliy|--clean-images-yocto (remove yocto kernel and rootfs images"
 		echo "-clio|--clean-images-openwrt (remove openwrt kernel and rootfs images"
 		echo "--clean-namespaces (remove created network namespace+associated veth device and bridges)"
+		echo "--clean-network-env-ovs (remove created ovs network bridges + veth devices)"
 		echo "--clean-all (remove everything generated by this script)"
 		exit 1
 		;;

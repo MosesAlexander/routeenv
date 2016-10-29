@@ -1,0 +1,6 @@
+#!/bin/sh
+
+echo "Executing /etc/qemu-ifdown"
+sudo /usr/bin/ip link set $1 down
+sudo ovs-vsctl del-port wrtbridge1 $1
+sudo /usr/bin/ip link delete dev $1
