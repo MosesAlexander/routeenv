@@ -21,6 +21,7 @@
 
 OPENWRT_PATH=/home/obsrwr/bmound/savedvols/kernwork/openwrt-qemu/openwrt
 YOCTO_PATH=/home/obsrwr/bmound/savedvols/kernwork/yocto/build
+OPENBSD_PATH=/home/obsrwr/bmound/savedvols/kernwork/openbsd
 
 copy_images_openwrt () {
 	mkdir -p env/openwrt
@@ -35,6 +36,12 @@ copy_images_yocto () {
 	cp -v ${YOCTO_PATH}/tmp/deploy/images/qemux86-64/bzImage env/yocto/yocto-kernel
 	cp -v ${YOCTO_PATH}/tmp/deploy/images/qemux86-64/core-image-full-cmdline-qemux86-64.ext4 env/yocto/rootfs0-yocto.ext4
 	cp -v --reflink env/yocto/rootfs0-yocto.ext4 env/yocto/rootfs1-yocto.ext4
+}
+
+copy_images_openbsd () {
+	mkdir -p env/openbsd
+	cp -v ${OPENBSD_PATH}/openbsd.raw env/openbsd/rootfs0-openbsd
+	cp -v --reflink env/openbsd/rootfs0-openbsd env/openbsd/rootfs1-openbsd
 }
 
 copy_images_all () {
@@ -136,7 +143,7 @@ cleanup_images_all () {
 OVSENV="0"
 
 start_qemu () {
-	echo "VM type: openwrt or yocto:"
+	echo "VM type: openwrt, yocto or openbsd"
 	read VMTYPE
 
 	echo "VM net namespace 0 or 1:"
@@ -188,6 +195,23 @@ start_qemu () {
 					-cpu kvm64 -M q35 \
 					-netdev tap,id=nic0,ifname=yocwrt-tap$NETNSNUM,script=conf/helpers/${ovsprefix}qemu-ifup-yoctobridge$NETNSNUM,downscript=conf/helpers/${ovsprefix}qemu-ifdown-yoctobridge$NETNSNUM \
 					-device e1000,netdev=nic0
+			;;
+		openbsd)
+			if [ ! -e env/openbsd/rootfs$NETNSNUM-openbsd ]; then
+				echo "ERROR: must provide kernel/rootfs images via -c parameter before attempting to boot"
+				exit 1
+			fi
+
+			# use the openwrt qemu helper scripts. if you're using openbsd as something 
+			# other than a firewall, you're on drugs
+			sudo qemu-system-x86_64 -drive file=env/openbsd/rootfs$NETNSNUM-openbsd,id=d0,if=none,format=raw \
+					-device ide-hd,drive=d0,bus=ide.0 \
+					-nographic -serial mon:stdio -enable-kvm \
+					-cpu kvm64 -smp cpus=2 -m 512M \
+					-netdev tap,id=nic0,ifname=wrtyoc-tap$NETNSNUM,script=conf/helpers/${ovsprefix}qemu-ifup-yoctobridge$NETNSNUM,downscript=conf/helpers/${ovsprefix}qemu-ifdown-yoctobridge$NETNSNUM \
+					-device e1000,netdev=nic0 \
+					-netdev tap,id=nic1,ifname=wrtwrt-tap$NETNSNUM,script=conf/helpers/${ovsprefix}qemu-ifup-wrtbridge$NETNSNUM,downscript=conf/helpers/${ovsprefix}qemu-ifdown-wrtbridge$NETNSNUM \
+					-device e1000,netdev=nic1
 			;;
 		*)
 			echo "Error, invalid VM type!"
@@ -263,6 +287,10 @@ case "$1" in
 	-cpo|--copy-images-openwrt)
 		echo "Copying openwrt rootfs images and kernel"
 		copy_images_openwrt
+		;;
+	-cpbsd|--copy-images-openbsd)
+		echo "Copying openbsd rootfs images"
+		copy_images_openbsd
 		;;
 	-s|--set_paths)
 		#TODO will probably just have an env.conf file 
