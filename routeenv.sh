@@ -64,31 +64,43 @@ create_namespace_env () {
 	# the veth devices will be used so the openwrt routers can
 	# communicate with each other coming from separate net namespaces
 	error_check_sudo "ip link add veth0 type veth peer name veth1"
+	error_check_sudo "ip link add extveth0 type veth peer name extveth1"
 	error_check_sudo "ip link set veth1 netns outer_ns"
+	error_check_sudo "ip link set extveth1 netns outer_ns"
 	error_check_sudo "ip link set veth0 up"
+	error_check_sudo "ip link set extveth0 up"
 	error_check_sudo "ip netns exec outer_ns ip link set veth1 up"
+	error_check_sudo "ip netns exec outer_ns ip link set extveth1 up"
 	# the idea is to have 2 bridges in each network namespace,
 	# one so the yocto host can communicate with the router,
 	# the other so the routers can communicate with eachother.
 	error_check_sudo "ip netns exec outer_ns brctl addbr wrtbridge1"
 	error_check_sudo "ip netns exec outer_ns brctl addbr yoctobridge1"
+	error_check_sudo "ip netns exec outer_ns brctl addbr extbridge1"
 	error_check_sudo "ip netns exec outer_ns brctl addif wrtbridge1 veth1"
+	error_check_sudo "ip netns exec outer_ns brctl addif extbridge1 extveth1"
 	error_check_sudo "brctl addbr wrtbridge0"
 	error_check_sudo "brctl addbr yoctobridge0"
+	error_check_sudo "brctl addbr extbridge0"
 	error_check_sudo "brctl addif wrtbridge0 veth0"
+	error_check_sudo "brctl addif extbridge0 extveth0"
 	# set bridges up
 	error_check_sudo "ip link set dev wrtbridge0 up"
 	error_check_sudo "ip link set dev yoctobridge0 up"
+	error_check_sudo "ip link set dev extbridge0 up"
 	error_check_sudo "ip netns exec outer_ns ip link set dev wrtbridge1 up"
+	error_check_sudo "ip netns exec outer_ns ip link set dev extbridge1 up"
 	error_check_sudo "ip netns exec outer_ns ip link set dev yoctobridge1 up"
 }
 
 cleanup_namespace_env () {
 	sudo ip link set dev wrtbridge0 down
 	sudo ip link set dev yoctobridge0 down
+	sudo ip link set dev extbridge0 down
 	sudo ip link del veth0
 	sudo brctl delbr wrtbridge0
 	sudo brctl delbr yoctobridge0
+	sudo brctl delbr extbridge0
 	sudo ip netns del outer_ns
 }
 
@@ -179,7 +191,10 @@ start_qemu () {
 					-netdev tap,id=nic0,ifname=wrtyoc-tap$NETNSNUM,script=conf/helpers/${ovsprefix}qemu-ifup-yoctobridge$NETNSNUM,downscript=conf/helpers/${ovsprefix}qemu-ifdown-yoctobridge$NETNSNUM \
 					-device e1000,netdev=nic0 \
 					-netdev tap,id=nic1,ifname=wrtwrt-tap$NETNSNUM,script=conf/helpers/${ovsprefix}qemu-ifup-wrtbridge$NETNSNUM,downscript=conf/helpers/${ovsprefix}qemu-ifdown-wrtbridge$NETNSNUM \
-					-device e1000,netdev=nic1
+					-device e1000,netdev=nic1 \
+					-netdev tap,id=nic2,ifname=wrtext-tap$NETNSNUM,script=conf/helpers/${ovsprefix}qemu-ifup-extbridge$NETNSNUM,downscript=conf/helpers/${ovsprefix}qemu-ifdown-extbridge$NETNSNUM \
+					-device e1000,netdev=nic2
+
 
 			;;
 		yocto)
