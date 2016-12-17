@@ -189,11 +189,11 @@ start_qemu () {
 					-nographic -serial mon:stdio -enable-kvm \
 					-cpu kvm64 -M q35 \
 					-netdev tap,id=nic0,ifname=wrtyoc-tap$NETNSNUM,script=conf/helpers/${ovsprefix}qemu-ifup-yoctobridge$NETNSNUM,downscript=conf/helpers/${ovsprefix}qemu-ifdown-yoctobridge$NETNSNUM \
-					-device e1000,netdev=nic0 \
+					-device virtio-net-pci,netdev=nic0 \
 					-netdev tap,id=nic1,ifname=wrtwrt-tap$NETNSNUM,script=conf/helpers/${ovsprefix}qemu-ifup-wrtbridge$NETNSNUM,downscript=conf/helpers/${ovsprefix}qemu-ifdown-wrtbridge$NETNSNUM \
-					-device e1000,netdev=nic1 \
+					-device virtio-net-pci,netdev=nic1 \
 					-netdev tap,id=nic2,ifname=wrtext-tap$NETNSNUM,script=conf/helpers/${ovsprefix}qemu-ifup-extbridge$NETNSNUM,downscript=conf/helpers/${ovsprefix}qemu-ifdown-extbridge$NETNSNUM \
-					-device e1000,netdev=nic2
+					-device virtio-net-pci,netdev=nic2
 
 
 			;;
@@ -209,7 +209,7 @@ start_qemu () {
 					-nographic -serial mon:stdio -enable-kvm \
 					-cpu kvm64 -M q35 \
 					-netdev tap,id=nic0,ifname=yocwrt-tap$NETNSNUM,script=conf/helpers/${ovsprefix}qemu-ifup-yoctobridge$NETNSNUM,downscript=conf/helpers/${ovsprefix}qemu-ifdown-yoctobridge$NETNSNUM \
-					-device e1000,netdev=nic0
+					-device virtio-net-pci,netdev=nic0
 			;;
 		openbsd)
 			if [ ! -e env/openbsd/rootfs$NETNSNUM-openbsd ]; then
@@ -224,9 +224,9 @@ start_qemu () {
 					-nographic -serial mon:stdio -enable-kvm \
 					-cpu kvm64 -smp cpus=2 -m 512M \
 					-netdev tap,id=nic0,ifname=wrtyoc-tap$NETNSNUM,script=conf/helpers/${ovsprefix}qemu-ifup-yoctobridge$NETNSNUM,downscript=conf/helpers/${ovsprefix}qemu-ifdown-yoctobridge$NETNSNUM \
-					-device e1000,netdev=nic0 \
+					-device virtio-net-pci,netdev=nic0 \
 					-netdev tap,id=nic1,ifname=wrtwrt-tap$NETNSNUM,script=conf/helpers/${ovsprefix}qemu-ifup-wrtbridge$NETNSNUM,downscript=conf/helpers/${ovsprefix}qemu-ifdown-wrtbridge$NETNSNUM \
-					-device e1000,netdev=nic1
+					-device virtio-net-pci,netdev=nic1
 			;;
 		*)
 			echo "Error, invalid VM type!"
