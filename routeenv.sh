@@ -20,7 +20,7 @@
 #
 
 OPENWRT_PATH=/home/obsrwr/bmound/savedvols/kernwork/openwrt-qemu/openwrt
-YOCTO_PATH=/home/obsrwr/bmound/savedvols/kernwork/yocto/build
+YOCTO_PATH=/home/obsrwr/games/yocto/poky/build
 OPENBSD_PATH=/home/obsrwr/bmound/savedvols/kernwork/openbsd
 
 copy_images_openwrt () {
@@ -178,7 +178,7 @@ start_qemu () {
 
 	case "$VMTYPE" in
 		openwrt)
-			if [ ! -e env/openwrt/openwrt-kernel ] | [ ! -e env/yocto/rootfs$NETNSNUM-yocto.ext4 ]; then
+			if [ ! -e env/openwrt/openwrt-kernel ] | [ ! -e env/openwrt/rootfs$NETNSNUM-openwrt.ext4 ]; then
 				echo "ERROR: must provide kernel/rootfs images via -c parameter before attempting to boot"
 				exit 1
 			fi
@@ -198,7 +198,7 @@ start_qemu () {
 
 			;;
 		yocto)
-			if [ ! -e env/yocto/yocto-kernel ] | [ ! -e env/openwrt/rootfs$NETNSNUM-openwrt.ext4 ]; then
+			if [ ! -e env/yocto/yocto-kernel ] | [ ! -e env/yocto/rootfs$NETNSNUM-yocto.ext4 ]; then
 				echo "ERROR: must provide kernel/rootfs images via -c parameter before attempting to boot"
 				exit 1
 			fi
